@@ -68,14 +68,14 @@ func randomLevel() int {
 	return SKIPLIST_MAXLEVEL
 }
 
-func (this *SortedSet) insertNode(score Score, key int, value interface{}) *SortedSetNode {
+func (ss *SortedSet) insertNode(score Score, key int, value interface{}) *SortedSetNode {
 	var update [SKIPLIST_MAXLEVEL]*SortedSetNode
 	var rank [SKIPLIST_MAXLEVEL]int64
 
-	x := this.header
-	for i := this.level - 1; i >= 0; i-- {
+	x := ss.header
+	for i := ss.level - 1; i >= 0; i-- {
 		/* store rank that is crossed to reach the insert position */
-		if this.level-1 == i {
+		if ss.level-1 == i {
 			rank[i] = 0
 		} else {
 			rank[i] = rank[i+1]
@@ -97,13 +97,13 @@ func (this *SortedSet) insertNode(score Score, key int, value interface{}) *Sort
 	 * if the element is already inside or not. */
 	level := randomLevel()
 
-	if level > this.level { // add a new level
-		for i := this.level; i < level; i++ {
+	if level > ss.level { // add a new level
+		for i := ss.level; i < level; i++ {
 			rank[i] = 0
-			update[i] = this.header
-			update[i].level[i].span = this.length
+			update[i] = ss.header
+			update[i].level[i].span = ss.length
 		}
-		this.level = level
+		ss.level = level
 	}
 
 	x = createNode(level, score, key, value)
@@ -117,11 +117,11 @@ func (this *SortedSet) insertNode(score Score, key int, value interface{}) *Sort
 	}
 
 	/* increment span for untouched levels */
-	for i := level; i < this.level; i++ {
+	for i := level; i < ss.level; i++ {
 		update[i].level[i].span++
 	}
 
-	if update[0] == this.header {
+	if update[0] == ss.header {
 		x.backward = nil
 	} else {
 		x.backward = update[0]
@@ -129,15 +129,15 @@ func (this *SortedSet) insertNode(score Score, key int, value interface{}) *Sort
 	if x.level[0].forward != nil {
 		x.level[0].forward.backward = x
 	} else {
-		this.tail = x
+		ss.tail = x
 	}
-	this.length++
+	ss.length++
 	return x
 }
 
 /* Internal function used by delete, DeleteByScore and DeleteByRank */
-func (this *SortedSet) deleteNode(x *SortedSetNode, update [SKIPLIST_MAXLEVEL]*SortedSetNode) {
-	for i := 0; i < this.level; i++ {
+func (ss *SortedSet) deleteNode(x *SortedSetNode, update [SKIPLIST_MAXLEVEL]*SortedSetNode) {
+	for i := 0; i < ss.level; i++ {
 		if update[i].level[i].forward == x {
 			update[i].level[i].span += x.level[i].span - 1
 			update[i].level[i].forward = x.level[i].forward
@@ -148,21 +148,21 @@ func (this *SortedSet) deleteNode(x *SortedSetNode, update [SKIPLIST_MAXLEVEL]*S
 	if x.level[0].forward != nil {
 		x.level[0].forward.backward = x.backward
 	} else {
-		this.tail = x.backward
+		ss.tail = x.backward
 	}
-	for this.level > 1 && this.header.level[this.level-1].forward == nil {
-		this.level--
+	for ss.level > 1 && ss.header.level[ss.level-1].forward == nil {
+		ss.level--
 	}
-	this.length--
-	delete(this.dict, x.key)
+	ss.length--
+	delete(ss.dict, x.key)
 }
 
 /* Delete an element with matching score/key from the skiplist. */
-func (this *SortedSet) delete(score Score, key int) bool {
+func (ss *SortedSet) delete(score Score, key int) bool {
 	var update [SKIPLIST_MAXLEVEL]*SortedSetNode
 
-	x := this.header
-	for i := this.level - 1; i >= 0; i-- {
+	x := ss.header
+	for i := ss.level - 1; i >= 0; i-- {
 		for x.level[i].forward != nil &&
 			(x.level[i].forward.score < score ||
 				(x.level[i].forward.score == score &&
@@ -175,7 +175,7 @@ func (this *SortedSet) delete(score Score, key int) bool {
 	 * is to find the element with both the right score and object. */
 	x = x.level[0].forward
 	if x != nil && score == x.score && x.key == key {
-		this.deleteNode(x, update)
+		ss.deleteNode(x, update)
 		// free x
 		return true
 	}
@@ -193,41 +193,41 @@ func New() *SortedSet {
 }
 
 // Get the number of elements
-func (this *SortedSet) GetCount() int {
-	return int(this.length)
+func (ss *SortedSet) GetCount() int {
+	return int(ss.length)
 }
 
 // get the element with minimum score, nil if the set is empty
 //
 // Time complexity of this method is : O(log(N))
-func (this *SortedSet) PeekMin() *SortedSetNode {
-	return this.header.level[0].forward
+func (ss *SortedSet) PeekMin() *SortedSetNode {
+	return ss.header.level[0].forward
 }
 
 // get and remove the element with minimal score, nil if the set is empty
 //
 // // Time complexity of this method is : O(log(N))
-func (this *SortedSet) PopMin() *SortedSetNode {
-	x := this.header.level[0].forward
+func (ss *SortedSet) PopMin() *SortedSetNode {
+	x := ss.header.level[0].forward
 	if x != nil {
-		this.Remove(x.key)
+		ss.Remove(x.key)
 	}
 	return x
 }
 
 // get the element with maximum score, nil if the set is empty
 // Time Complexity : O(1)
-func (this *SortedSet) PeekMax() *SortedSetNode {
-	return this.tail
+func (ss *SortedSet) PeekMax() *SortedSetNode {
+	return ss.tail
 }
 
 // get and remove the element with maximum score, nil if the set is empty
 //
 // Time complexity of this method is : O(log(N))
-func (this *SortedSet) PopMax() *SortedSetNode {
-	x := this.tail
+func (ss *SortedSet) PopMax() *SortedSetNode {
+	x := ss.tail
 	if x != nil {
-		this.Remove(x.key)
+		ss.Remove(x.key)
 	}
 	return x
 }
@@ -236,24 +236,24 @@ func (this *SortedSet) PopMax() *SortedSetNode {
 // if the element is added, this method returns true; otherwise false means updated
 //
 // Time complexity of this method is : O(log(N))
-func (this *SortedSet) AddOrUpdate(key int, score Score, value interface{}) bool {
+func (ss *SortedSet) AddOrUpdate(key int, score Score, value interface{}) bool {
 	var newNode *SortedSetNode = nil
 
-	found := this.dict[key]
+	found := ss.dict[key]
 	if found != nil {
 		// score does not change, only update value
 		if found.score == score {
 			found.Value = value
 		} else { // score changes, delete and re-insert
-			this.delete(found.score, found.key)
-			newNode = this.insertNode(score, key, value)
+			ss.delete(found.score, found.key)
+			newNode = ss.insertNode(score, key, value)
 		}
 	} else {
-		newNode = this.insertNode(score, key, value)
+		newNode = ss.insertNode(score, key, value)
 	}
 
 	if newNode != nil {
-		this.dict[key] = newNode
+		ss.dict[key] = newNode
 	}
 	return found == nil
 }
@@ -261,10 +261,10 @@ func (this *SortedSet) AddOrUpdate(key int, score Score, value interface{}) bool
 // Delete element specified by key
 //
 // Time complexity of this method is : O(log(N))
-func (this *SortedSet) Remove(key int) *SortedSetNode {
-	found := this.dict[key]
+func (ss *SortedSet) Remove(key int) *SortedSetNode {
+	found := ss.dict[key]
 	if found != nil {
-		this.delete(found.score, found.key)
+		ss.delete(found.score, found.key)
 		return found
 	}
 	return nil
@@ -281,7 +281,7 @@ type GetByScoreRangeOptions struct {
 // If options is nil, it searchs in interval [start, end] without any limit by default
 //
 // Time complexity of this method is : O(log(N))
-func (this *SortedSet) GetByScoreRange(start Score, end Score, options *GetByScoreRangeOptions) []*SortedSetNode {
+func (ss *SortedSet) GetByScoreRange(start Score, end Score, options *GetByScoreRangeOptions) []*SortedSetNode {
 
 	// prepare parameters
 	var limit int = 2147483648
@@ -301,23 +301,23 @@ func (this *SortedSet) GetByScoreRange(start Score, end Score, options *GetBySco
 	var nodes []*SortedSetNode
 
 	//determine if out of range
-	if this.length == 0 {
+	if ss.length == 0 {
 		return nodes
 	}
 	//////////////////////////
 
 	if reverse { // search from end to start
-		x := this.header
+		x := ss.header
 
 		if excludeEnd {
-			for i := this.level - 1; i >= 0; i-- {
+			for i := ss.level - 1; i >= 0; i-- {
 				for x.level[i].forward != nil &&
 					x.level[i].forward.score < end {
 					x = x.level[i].forward
 				}
 			}
 		} else {
-			for i := this.level - 1; i >= 0; i-- {
+			for i := ss.level - 1; i >= 0; i-- {
 				for x.level[i].forward != nil &&
 					x.level[i].forward.score <= end {
 					x = x.level[i].forward
@@ -345,16 +345,16 @@ func (this *SortedSet) GetByScoreRange(start Score, end Score, options *GetBySco
 		}
 	} else {
 		// search from start to end
-		x := this.header
+		x := ss.header
 		if excludeStart {
-			for i := this.level - 1; i >= 0; i-- {
+			for i := ss.level - 1; i >= 0; i-- {
 				for x.level[i].forward != nil &&
 					x.level[i].forward.score <= start {
 					x = x.level[i].forward
 				}
 			}
 		} else {
-			for i := this.level - 1; i >= 0; i-- {
+			for i := ss.level - 1; i >= 0; i-- {
 				for x.level[i].forward != nil &&
 					x.level[i].forward.score < start {
 					x = x.level[i].forward
@@ -395,14 +395,14 @@ func (this *SortedSet) GetByScoreRange(start Score, end Score, options *GetBySco
 // If remove is true, the returned nodes are removed
 //
 // Time complexity of this method is : O(log(N))
-func (this *SortedSet) GetByRankRange(start int, end int, remove bool) []*SortedSetNode {
+func (ss *SortedSet) GetByRankRange(start int, end int, remove bool) []*SortedSetNode {
 
 	/* Sanitize indexes. */
 	if start < 0 {
-		start = int(this.length) + start + 1
+		start = int(ss.length) + start + 1
 	}
 	if end < 0 {
-		end = int(this.length) + end + 1
+		end = int(ss.length) + end + 1
 	}
 	if start <= 0 {
 		start = 1
@@ -420,8 +420,8 @@ func (this *SortedSet) GetByRankRange(start int, end int, remove bool) []*Sorted
 	var nodes []*SortedSetNode
 	var traversed int = 0
 
-	x := this.header
-	for i := this.level - 1; i >= 0; i-- {
+	x := ss.header
+	for i := ss.level - 1; i >= 0; i-- {
 		for x.level[i].forward != nil &&
 			traversed+int(x.level[i].span) < start {
 			traversed += int(x.level[i].span)
@@ -444,7 +444,7 @@ func (this *SortedSet) GetByRankRange(start int, end int, remove bool) []*Sorted
 		nodes = append(nodes, x)
 
 		if remove {
-			this.deleteNode(x, update)
+			ss.deleteNode(x, update)
 		}
 
 		traversed++
@@ -466,8 +466,8 @@ func (this *SortedSet) GetByRankRange(start int, end int, remove bool) []*Sorted
 // If node is not found at specific rank, nil is returned
 //
 // Time complexity of this method is : O(log(N))
-func (this *SortedSet) GetByRank(rank int, remove bool) *SortedSetNode {
-	nodes := this.GetByRankRange(rank, rank, remove)
+func (ss *SortedSet) GetByRank(rank int, remove bool) *SortedSetNode {
+	nodes := ss.GetByRankRange(rank, rank, remove)
 	if len(nodes) == 1 {
 		return nodes[0]
 	}
@@ -478,8 +478,8 @@ func (this *SortedSet) GetByRank(rank int, remove bool) *SortedSetNode {
 //
 // If node is not found, nil is returned
 // Time complexity : O(1)
-func (this *SortedSet) GetByKey(key int) *SortedSetNode {
-	return this.dict[key]
+func (ss *SortedSet) GetByKey(key int) *SortedSetNode {
+	return ss.dict[key]
 }
 
 // Find the rank of the node specified by key
@@ -488,12 +488,12 @@ func (this *SortedSet) GetByKey(key int) *SortedSetNode {
 // If the node is not found, 0 is returned. Otherwise rank(> 0) is returned
 //
 // Time complexity of this method is : O(log(N))
-func (this *SortedSet) FindRank(key int) int {
+func (ss *SortedSet) FindRank(key int) int {
 	var rank int = 0
-	node := this.dict[key]
+	node := ss.dict[key]
 	if node != nil {
-		x := this.header
-		for i := this.level - 1; i >= 0; i-- {
+		x := ss.header
+		for i := ss.level - 1; i >= 0; i-- {
 			for x.level[i].forward != nil &&
 				(x.level[i].forward.score < node.score ||
 					(x.level[i].forward.score == node.score &&

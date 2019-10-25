@@ -39,11 +39,11 @@ type SortedSetNode struct {
 }
 
 // Get the key of the node
-func (this *SortedSetNode) Key() int {
-	return this.key
+func (ssn *SortedSetNode) Key() int {
+	return ssn.key
 }
 
 // Get the node of the node
-func (this *SortedSetNode) Score() Score {
-	return this.score
+func (ssn *SortedSetNode) Score() Score {
+	return ssn.score
 }
