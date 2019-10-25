@@ -46,7 +46,7 @@ func createNode(level int, score Score, key int, value interface{}) *SortedSetNo
 	node := SortedSetNode{
 		score: score,
 		key:   key,
-		Value: value,
+		value: value,
 		level: make([]SortedSetLevel, level),
 	}
 	return &node
@@ -243,7 +243,7 @@ func (ss *SortedSet) AddOrUpdate(key int, score Score, value interface{}) bool {
 	if found != nil {
 		// score does not change, only update value
 		if found.score == score {
-			found.Value = value
+			found.value = value
 		} else { // score changes, delete and re-insert
 			ss.delete(found.score, found.key)
 			newNode = ss.insertNode(score, key, value)
