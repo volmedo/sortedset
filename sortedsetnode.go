@@ -1,4 +1,5 @@
 // Copyright (c) 2016, Jerry.Wang
+// Copyright (c) 2019, Vicente Olmedo
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
